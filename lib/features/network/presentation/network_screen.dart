@@ -222,6 +222,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
                                     return Showcase(
                                       key: _categoriesKey,
                                       description: 'tutorial.network.categories'
+                                          .tr()
                                           .tr(),
                                       child: BlocBuilder<NetworkCubit, NetworkState>(
                                         buildWhen: (previous, current) => true,
