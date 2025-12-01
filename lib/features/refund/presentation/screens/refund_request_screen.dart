@@ -239,13 +239,16 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
                     title: 'refund_request.title'.tr(),
                     backPath: '/home',
                     onHelp: () {
-                      ShowCaseWidget.of(context).startShowCase([
-                        _familyKey,
-                        _providerKey,
-                        _noteKey,
-                        _attachKey,
-                        _submitKey,
-                      ]);
+                      // استخدام addPostFrameCallback للتأكد من بناء كل الـ widgets
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        ShowCaseWidget.of(context).startShowCase([
+                          _familyKey,
+                          _providerKey,
+                          _noteKey,
+                          _attachKey,
+                          _submitKey,
+                        ]);
+                      });
                     },
                   ),
                   Transform.translate(
@@ -464,28 +467,39 @@ class _RefundRequestScreenState extends State<RefundRequestScreen> {
                                 ),
                               ),
                               SizedBox(height: 16.h),
-                              if (_selectedRefundTypeId != null &&
-                                  _selectedRefundAttachments.isNotEmpty) ...[
-                                SizedBox(height: 16.h),
-                                Showcase(
-                                  key: _attachKey,
-                                  description: 'tutorial.attachments.hint'.tr(),
-                                  child: AddAttachmentWidget(
-                                    key: ValueKey(_selectedRefundTypeId),
-                                    refundTypeName: _selectedRefundTypeName,
-                                    attachments: _selectedRefundAttachments,
-                                    onAttachmentsChanged:
-                                        (paths, hasAllRequired) {
-                                          setState(() {
-                                            _attachmentPaths = paths;
-                                            _hasAllRequiredAttachments =
-                                                hasAllRequired;
-                                          });
-                                        },
-                                    onAttachmentDialogClosed: _unfocusAll,
-                                  ),
+                              // إظهار attachments section دايماً للـ showcase (مخفية لو مش محدد type)
+                              Showcase(
+                                key: _attachKey,
+                                description: 'tutorial.attachments.hint'.tr(),
+                                child: Visibility(
+                                  visible:
+                                      _selectedRefundTypeId != null &&
+                                      _selectedRefundAttachments.isNotEmpty,
+                                  maintainSize: false,
+                                  maintainAnimation: false,
+                                  maintainState: false,
+                                  child:
+                                      _selectedRefundTypeId != null &&
+                                          _selectedRefundAttachments.isNotEmpty
+                                      ? AddAttachmentWidget(
+                                          key: ValueKey(_selectedRefundTypeId),
+                                          refundTypeName:
+                                              _selectedRefundTypeName,
+                                          attachments:
+                                              _selectedRefundAttachments,
+                                          onAttachmentsChanged:
+                                              (paths, hasAllRequired) {
+                                                setState(() {
+                                                  _attachmentPaths = paths;
+                                                  _hasAllRequiredAttachments =
+                                                      hasAllRequired;
+                                                });
+                                              },
+                                          onAttachmentDialogClosed: _unfocusAll,
+                                        )
+                                      : const SizedBox.shrink(),
                                 ),
-                              ],
+                              ),
                               SizedBox(height: 20.h),
                               Showcase(
                                 key: _submitKey,
