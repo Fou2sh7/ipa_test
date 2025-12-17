@@ -85,9 +85,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   controller: cardController,
                   hintText: 'auth.signup.card_id_placeholder'.tr(),
                   prefixImagePath: AppAssets.cardIcon,
+                  keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'auth.signup.validation.card_id_required'.tr();
+                    }
+                    // Check if contains only numbers
+                    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                      return 'auth.signup.validation.card_id_numbers'.tr();
+                    }
+                    // Check if starts with 20 (only if user has typed at least 2 characters)
+                    if (value.isNotEmpty && !value.startsWith('20')) {
+                      return 'auth.signup.validation.card_id_start'.tr();
                     }
                     return null;
                   },
@@ -111,6 +120,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   controller: nationalController,
                   hintText: 'auth.signup.national_id_placeholder'.tr(),
                   prefixImagePath: AppAssets.idIcon,
+                  keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'auth.signup.validation.national_id_required'.tr();

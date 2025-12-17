@@ -62,7 +62,7 @@ class _PolicyDetailsScreenState extends State<PolicyDetailsScreen> {
               return Column(
                 children: [
                   PageHeader(
-                    title: '${PolicyServiceHelper.getLocalizedServiceName(widget.serviceName)} ${'policy_screen.policy'.tr()}',
+                    title: PolicyServiceHelper.getPolicyTitle(widget.serviceName, context),
                     backPath: '/policy',
                   ),
                   Expanded(

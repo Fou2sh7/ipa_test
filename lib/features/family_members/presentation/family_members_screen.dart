@@ -1,8 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mediconsult/core/constants/app_assets.dart';
 import 'package:mediconsult/core/theming/app_colors.dart';
 import 'package:mediconsult/core/theming/app_text_styles.dart';
+import 'package:mediconsult/core/widgets/image_shimmer.dart';
 import 'package:mediconsult/shared/widgets/page_header.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mediconsult/features/family_members/presentation/cubit/family_members_cubit.dart';
@@ -18,14 +20,40 @@ class FamilyMembersScreen extends StatefulWidget {
 }
 
 class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
+  String? _lastLanguageCode;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FamilyMembersCubit>().getFamilyMembers(
-        LanguageHelper.getLanguageCode(context),
-      );
-    });
+    // Don't use context here - it's not ready yet
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Get current language - context is ready here
+    final currentLang = LanguageHelper.getLanguageCode(context);
+    
+    // First time initialization or language changed
+    if (_lastLanguageCode == null || _lastLanguageCode != currentLang) {
+      final isLanguageChange = _lastLanguageCode != null && _lastLanguageCode != currentLang;
+      _lastLanguageCode = currentLang;
+      
+      if (isLanguageChange) {
+        // Clear cache and reload with new language
+        context.read<FamilyMembersCubit>().clearCache();
+      }
+      
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          // Always force refresh to ensure data matches current language
+          context.read<FamilyMembersCubit>().getFamilyMembers(
+            currentLang,
+            forceRefresh: true,
+          );
+        }
+      });
+    }
   }
 
   @override
@@ -78,7 +106,12 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                                     loading: () => const Center(
                                       child: CircularProgressIndicator(),
                                     ),
-                                    failed: (msg) => Center(child: Text(msg)),
+                                    failed: (msg) => Center(
+                                      child: Text(
+                                        msg.isNotEmpty ? msg : 'common.error'.tr(),
+                                        style: AppTextStyles.font14GreyRegular(context),
+                                      ),
+                                    ),
                                     loaded: (model) {
                                       final members = model.data.familyMembers;
                                       if (members.isEmpty) {
@@ -147,22 +180,104 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
     );
   }
 
+  /// Translate level value from API to localized string
+  String _translateLevel(String level, bool isHeadOfFamily) {
+    final levelLower = level.trim().toLowerCase();
+    
+    // If it's head of family, show "Head of Family"
+    if (isHeadOfFamily) {
+      return 'family_members.level.head_of_family'.tr();
+    }
+    
+    // Map common level values
+    switch (levelLower) {
+      case 'member':
+        // For non-head members, we might need to show relationship if available
+        // But since API returns "Member", we'll use a generic translation
+        return 'family_members.level.member'.tr();
+      case 'spouse':
+        return 'family_members.relationships.spouse'.tr();
+      case 'son':
+        return 'family_members.relationships.son'.tr();
+      case 'daughter':
+        return 'family_members.relationships.daughter'.tr();
+      case 'parent':
+        return 'family_members.relationships.parent'.tr();
+      default:
+        // Fallback to original value if no match
+        return level;
+    }
+  }
+
+  /// Translate member status from API to localized string
+  String _translateMemberStatus(String status) {
+    final statusLower = status.trim().toLowerCase();
+    
+    switch (statusLower) {
+      case 'activated':
+        return 'family_members.activated_member'.tr();
+      case 'inactive':
+      case 'deactivated':
+        return 'family_members.inactive_member'.tr();
+      default:
+        // Fallback to original value if no match
+        return status;
+    }
+  }
+
+  /// Translate program name from API to localized string
+  String _translateProgramName(String programName) {
+    final programLower = programName.trim().toLowerCase();
+    
+    // Map common program names
+    switch (programLower) {
+      case 'gold plan':
+      case 'gold':
+        return 'family_members.gold_plan'.tr();
+      case 'platinum-vip':
+      case 'platinum vip':
+      case 'platinum':
+        return 'family_members.platinum_vip'.tr();
+      default:
+        // Fallback to original value if no match
+        return programName;
+    }
+  }
+
   Widget _buildMemberCard(member) {
-    // Default to 'Gold Plan' if memberStatus is empty or null
+    // Translate member status
     final String displayStatus =
         (member.memberStatus != null && member.memberStatus.isNotEmpty)
-        ? member.memberStatus
+        ? _translateMemberStatus(member.memberStatus)
         : 'family_members.activated_member'.tr();
+
+    // Translate level (pass isHeadOfFamily to determine if it's head of family)
+    final String translatedLevel = _translateLevel(member.level, member.isHeadOfFamily);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
           radius: 32.r,
-          backgroundImage:
-              (member.memberImage != null && member.memberImage!.isNotEmpty)
-              ? NetworkImage(member.memberImage!)
-              : const AssetImage(AppAssets.logo) as ImageProvider,
+          backgroundColor: AppColors.lightGreyClr,
+          child: (member.memberImage != null && member.memberImage!.isNotEmpty)
+              ? ClipOval(
+                  child: CachedNetworkImage(
+                    imageUrl: member.memberImage!,
+                    fit: BoxFit.cover,
+                    width: 64.w,
+                    height: 64.h,
+                    placeholder: (context, url) => ImageShimmer.circle(),
+                    errorWidget: (context, url, error) => Image.asset(
+                      AppAssets.logo,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                )
+              : Image.asset(
+                  AppAssets.logo,
+                  fit: BoxFit.cover,
+                ),
         ),
         SizedBox(width: 12.w),
         Expanded(
@@ -183,7 +298,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                   ),
                   SizedBox(width: 4.w),
                   Text(
-                    member.level,
+                    translatedLevel,
                     style: AppTextStyles.font12GreyRegular(context),
                   ),
                 ],
@@ -228,7 +343,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                       ),
                       SizedBox(width: 4.w),
                       Text(
-                        member.programName!,
+                        _translateProgramName(member.programName!),
                         style: AppTextStyles.font12BlackMedium(
                           context,
                         ).copyWith(

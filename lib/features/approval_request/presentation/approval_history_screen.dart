@@ -1,18 +1,19 @@
 import 'dart:async';
+
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mediconsult/core/theming/app_colors.dart';
 import 'package:mediconsult/core/theming/app_text_styles.dart';
-import 'package:mediconsult/shared/widgets/page_header.dart';
 import 'package:mediconsult/features/approval_request/presentation/cubit/approvals_cubit.dart';
 import 'package:mediconsult/features/approval_request/presentation/cubit/approvals_state.dart';
 import 'package:mediconsult/features/approval_request/presentation/widgets/approval_empty_state.dart';
 import 'package:mediconsult/features/approval_request/presentation/widgets/approval_list_view.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:showcaseview/showcaseview.dart';
+import 'package:mediconsult/shared/widgets/page_header.dart';
 import 'package:mediconsult/shared/widgets/segmented_tabs.dart';
+import 'package:mediconsult/shared/widgets/custom_showcase.dart';
 
 // ignore_for_file: deprecated_member_use
 
@@ -32,6 +33,9 @@ class _ApprovalHistoryScreenState extends State<ApprovalHistoryScreen> {
   // Showcase keys
   final GlobalKey _tabsKey = GlobalKey();
   final GlobalKey _fabKey = GlobalKey();
+  
+  // Showcase state
+  int _showcaseIndex = -1;
 
   @override
   void initState() {
@@ -77,10 +81,47 @@ class _ApprovalHistoryScreenState extends State<ApprovalHistoryScreen> {
     super.dispose();
   }
 
+  void _startShowcase() {
+    setState(() {
+      _showcaseIndex = 0;
+    });
+  }
+
+  void _nextShowcase() {
+    if (_showcaseIndex < _showcaseKeys.length - 1) {
+      setState(() {
+        _showcaseIndex++;
+      });
+    } else {
+      _dismissShowcase();
+    }
+  }
+
+  void _dismissShowcase() {
+    setState(() {
+      _showcaseIndex = -1;
+    });
+  }
+
+  List<GlobalKey> get _showcaseKeys => [
+        _tabsKey,
+        _fabKey,
+      ];
+
+  List<String> get _showcaseDescriptions => [
+        'tutorial.approval_history.swipe'.tr(),
+        'tutorial.approval_history.fab'.tr(),
+      ];
+
   @override
   Widget build(BuildContext context) {
-    return ShowCaseWidget(
-      builder: (context) => Scaffold(
+    return CustomShowcaseOverlay(
+      targetKeys: _showcaseKeys,
+      descriptions: _showcaseDescriptions,
+      currentIndex: _showcaseIndex,
+      onNext: _nextShowcase,
+      onDismiss: _dismissShowcase,
+      child: Scaffold(
         backgroundColor: AppColors.lightGreyClr,
         body: SafeArea(
           child: Column(
@@ -89,7 +130,7 @@ class _ApprovalHistoryScreenState extends State<ApprovalHistoryScreen> {
                 title: 'approval_history.title'.tr(),
                 backPath: '/home',
                 onHelp: () {
-                  ShowCaseWidget.of(context).startShowCase([_tabsKey, _fabKey]);
+                  _startShowcase();
                 },
               ),
               Expanded(
@@ -113,9 +154,9 @@ class _ApprovalHistoryScreenState extends State<ApprovalHistoryScreen> {
                       child: Column(
                         children: [
                           SizedBox(height: 16.h),
-                          Showcase(
+                          CustomShowcase(
                             key: _tabsKey,
-                            description: 'Swipe or tap to filter approvals',
+                            targetKey: _tabsKey,
                             child: SegmentedTabs(
                               labels: [
                                 'approval_history.tabs.all'.tr(),
@@ -190,9 +231,9 @@ class _ApprovalHistoryScreenState extends State<ApprovalHistoryScreen> {
             ],
           ),
         ),
-        floatingActionButton: Showcase(
+        floatingActionButton: CustomShowcase(
           key: _fabKey,
-          description: 'Tap to create a new approval request',
+          targetKey: _fabKey,
           child: FloatingActionButton(
             onPressed: () {
               context.push('/approval-request');

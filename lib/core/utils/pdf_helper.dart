@@ -105,52 +105,50 @@ class PdfHelper {
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (messenger == null) return;
 
-    // إخفاء أي SnackBar موجود مسبقاً
+    // إخفاء أي SnackBar موجود مسبقاً قبل عرض الجديد
     messenger.hideCurrentSnackBar();
 
-    // عرض SnackBar جديد
-    messenger.showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.error_outline, color: Colors.white, size: 24.sp),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Text(
-                message.tr(),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
+    // استخدام Future.microtask للتأكد من أن الـ hideCurrentSnackBar تم تنفيذه أولاً
+    Future.microtask(() {
+      if (!context.mounted) return;
+      
+      // عرض SnackBar جديد
+      messenger.showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white, size: 24.sp),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  message.tr(),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
+          backgroundColor: const Color(0xFFD32F2F),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          margin: EdgeInsets.all(16.w),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+          duration: const Duration(seconds: 4),
+          dismissDirection: DismissDirection.horizontal,
+          action: SnackBarAction(
+            label: 'common.dismiss'.tr(),
+            textColor: Colors.white,
+            onPressed: () {
+              messenger.hideCurrentSnackBar();
+            },
+          ),
         ),
-        backgroundColor: const Color(0xFFD32F2F),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        margin: EdgeInsets.all(16.w),
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        duration: const Duration(seconds: 3),
-        dismissDirection: DismissDirection.horizontal,
-        action: SnackBarAction(
-          label: 'common.dismiss'.tr(),
-          textColor: Colors.white,
-          onPressed: () {
-            messenger.hideCurrentSnackBar();
-          },
-        ),
-      ),
-    );
-
-    // إجبار الإخفاء بعد 3 ثواني (حتى لو المستخدم ما داس dismiss)
-    Future.delayed(const Duration(seconds: 3), () {
-      if (context.mounted) {
-        messenger.hideCurrentSnackBar();
-      }
+      );
     });
   }
 }

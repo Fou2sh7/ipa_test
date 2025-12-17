@@ -1,23 +1,25 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mediconsult/core/theming/app_colors.dart';
 import 'package:mediconsult/core/theming/app_text_styles.dart';
-import 'package:mediconsult/features/approval_request/presentation/widgets/attachments/succes_dialog.dart';
-import 'package:mediconsult/features/approval_request/presentation/widgets/family_members_selector.dart';
-import 'package:mediconsult/features/approval_request/presentation/widgets/provider_selector.dart';
-import 'package:mediconsult/features/approval_request/presentation/widgets/note_text_field.dart';
-import 'package:mediconsult/features/approval_request/presentation/widgets/attachments_section.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mediconsult/core/utils/app_button.dart';
 import 'package:mediconsult/features/approval_request/presentation/cubit/approval_request_cubit.dart';
 import 'package:mediconsult/features/approval_request/presentation/cubit/approval_request_state.dart';
+import 'package:mediconsult/features/approval_request/presentation/widgets/attachments/succes_dialog.dart';
+import 'package:mediconsult/features/approval_request/presentation/widgets/attachments_section.dart';
+import 'package:mediconsult/features/approval_request/presentation/widgets/family_members_selector.dart';
+import 'package:mediconsult/features/approval_request/presentation/widgets/note_text_field.dart';
+import 'package:mediconsult/features/approval_request/presentation/widgets/provider_selector.dart';
 import 'package:mediconsult/features/family_members/data/family_response_model.dart';
 import 'package:mediconsult/features/providers/data/providers_models.dart';
-import 'package:mediconsult/shared/widgets/page_header.dart';
 import 'package:mediconsult/shared/widgets/app_snack_bar.dart';
-import 'package:mediconsult/core/utils/app_button.dart';
-import 'package:showcaseview/showcaseview.dart';
+import 'package:mediconsult/shared/widgets/page_header.dart';
+import 'package:mediconsult/shared/widgets/custom_showcase.dart';
+import 'package:mediconsult/core/cache/cache_service.dart';
+import 'package:mediconsult/core/services/home_refresh_service.dart';
 // ignore_for_file: deprecated_member_use
 
 class ApprovalRequestScreen extends StatefulWidget {
@@ -41,6 +43,9 @@ class _ApprovalRequestScreenState extends State<ApprovalRequestScreen> {
   final GlobalKey _providerKey = GlobalKey();
   final GlobalKey _noteKey = GlobalKey();
   final GlobalKey _attachKey = GlobalKey();
+  
+  // Showcase state
+  int _showcaseIndex = -1;
 
   @override
   void dispose() {
@@ -90,6 +95,7 @@ class _ApprovalRequestScreenState extends State<ApprovalRequestScreen> {
     );
   }
 
+
   void _showError(String message) {
     if (mounted) {
       HapticFeedback.lightImpact();
@@ -112,10 +118,53 @@ class _ApprovalRequestScreenState extends State<ApprovalRequestScreen> {
     context.read<ApprovalRequestCubit>().reset();
   }
 
+  void _startShowcase() {
+    setState(() {
+      _showcaseIndex = 0;
+    });
+  }
+
+  void _nextShowcase() {
+    if (_showcaseIndex < _showcaseKeys.length - 1) {
+      setState(() {
+        _showcaseIndex++;
+      });
+    } else {
+      _dismissShowcase();
+    }
+  }
+
+  void _dismissShowcase() {
+    setState(() {
+      _showcaseIndex = -1;
+    });
+  }
+
+  List<GlobalKey> get _showcaseKeys => [
+        _familyKey,
+        _providerKey,
+        _noteKey,
+        _attachKey,
+        _submitKey,
+      ];
+
+  List<String> get _showcaseDescriptions => [
+        'tutorial.family_members.select'.tr(),
+        'tutorial.provider.select'.tr(),
+        'tutorial.note.hint'.tr(),
+        'tutorial.attachments.hint'.tr(),
+        'tutorial.submit.tap'.tr(),
+      ];
+
   @override
   Widget build(BuildContext context) {
-    return ShowCaseWidget(
-      builder: (context) => Scaffold(
+    return CustomShowcaseOverlay(
+      targetKeys: _showcaseKeys,
+      descriptions: _showcaseDescriptions,
+      currentIndex: _showcaseIndex,
+      onNext: _nextShowcase,
+      onDismiss: _dismissShowcase,
+      child: Scaffold(
         backgroundColor: AppColors.lightGreyClr,
         resizeToAvoidBottomInset: true,
         body: GestureDetector(
@@ -125,185 +174,212 @@ class _ApprovalRequestScreenState extends State<ApprovalRequestScreen> {
           child: SafeArea(
             child: Column(
               children: [
-              PageHeader(
-                title: 'approval_request.title'.tr(),
-                backPath: '/approval-history',
-                onHelp: () {
-                  ShowCaseWidget.of(
-                    context,
-                  ).startShowCase([
-                    _familyKey,
-                    _providerKey,
-                    _noteKey,
-                    _attachKey,
-                    _submitKey,
-                  ]);
-                },
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Transform.translate(
-                        offset: Offset(0, -20.h),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          child: Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: AppColors.whiteClr,
-                              borderRadius: BorderRadius.circular(16.r),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.greyClr.withValues(
-                                    alpha: 0.08,
-                                  ),
-                                  blurRadius: 24,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.all(16.w),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'approval_request.family_members'.tr(),
-                                    style: AppTextStyles.font14BlackMedium(
-                                      context,
+                PageHeader(
+                  title: 'approval_request.title'.tr(),
+                  backPath: '/approval-history',
+                  onHelp: () {
+                    FocusScope.of(context).unfocus();
+                    FocusManager.instance.primaryFocus?.unfocus();
+                    SystemChannels.textInput.invokeMethod('TextInput.hide');
+                    _startShowcase();
+                  },
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Transform.translate(
+                          offset: Offset(0, -20.h),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.w),
+                            child: Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: AppColors.whiteClr,
+                                borderRadius: BorderRadius.circular(16.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.greyClr.withValues(
+                                      alpha: 0.08,
                                     ),
+                                    blurRadius: 24,
+                                    offset: const Offset(0, 8),
                                   ),
-                                  SizedBox(height: 12.h),
-                                  Showcase(
-                                    key: _familyKey,
-                                    description: 'tutorial.family_members.select'.tr(),
-                                    child: FamilyMembersSelector(
-                                      onMemberSelected: (member) {
-                                        setState(() {
-                                          _selectedFamilyMember = member;
-                                        });
-                                      },
-                                      selectedMember: _selectedFamilyMember,
-                                    ),
-                                  ),
-                                  SizedBox(height: 24.h),
-                                  Text(
-                                    'approval_request.provider'.tr(),
-                                    style: AppTextStyles.font14BlackMedium(
-                                      context,
-                                    ),
-                                  ),
-                                  SizedBox(height: 8.h),
-                                  Showcase(
-                                    key: _providerKey,
-                                    description: 'tutorial.provider.select'.tr(),
-                                    child: ProviderSelector(
-                                    onProviderSelected: (provider) {
-                                      setState(() {
-                                        _selectedProvider = provider;
-                                      });
-                                    },
-                                    selectedProvider: _selectedProvider,
-                                    ),
-                                  ),
-                                  SizedBox(height: 16.h),
-                                  Text(
-                                    'approval_request.note'.tr(),
-                                    style: AppTextStyles.font14BlackMedium(
-                                      context,
-                                    ),
-                                  ),
-                                  SizedBox(height: 8.h),
-                                  Showcase(
-                                    key: _noteKey,
-                                    description: 'tutorial.note.hint'.tr(),
-                                    child: NoteTextField(
-                                      maxLength: 300,
-                                      controller: _noteController,
-                                      errorText: _noteError,
-                                      onChanged: (value) {
-                                        if (_noteError != null && value.length <= 300) {
-                                          setState(() {
-                                            _noteError = null;
-                                          });
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(height: 21.h),
-                                  Showcase(
-                                    key: _attachKey,
-                                    description: 'tutorial.attachments.hint'.tr(),
-                                    child: AttachmentsSection(
-                                    onAttachmentsChanged: (attachments) {
-                                      setState(() {
-                                        _attachments.clear();
-                                        _attachments.addAll(attachments);
-                                      });
-                                      Future.delayed(const Duration(milliseconds: 300), () {
-                                        if (mounted) {
-                                          FocusScope.of(context).unfocus();
-                                          FocusManager.instance.primaryFocus?.unfocus();
-                                          SystemChannels.textInput.invokeMethod('TextInput.hide');
-                                        }
-                                      });
-                                    },
-                                    ),
-                                  ),
-                                  SizedBox(height: 20.h),
-                                  Showcase(
-                                    key: _submitKey,
-                                    description: 'tutorial.submit.tap'.tr(),
-                                    child:
-                                        BlocConsumer<
-                                          ApprovalRequestCubit,
-                                          ApprovalRequestState
-                                        >(
-                                          listener: (context, state) {
-                                            state.when(
-                                              initial: () {},
-                                              loading: () {},
-                                              success: (data) {
-                                                SuccessDialog.show(context);
-                                                _resetForm();
-                                              },
-                                              failed: (message) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(message),
-                                                    backgroundColor: Colors.red,
-                                                  ),
-                                                );
-                                              },
-                                            );
-                                          },
-                                          builder: (context, state) {
-                                            final isLoading = state is Loading;
-                                            return AppButton(
-                                              text: 'common.save'.tr(),
-                                              onPressed: _submitApprovalRequest,
-                                              isLoading: isLoading,
-                                              width: double.infinity,
-                                            );
-                                          },
-                                        ),
-                                  ),
-                                  SizedBox(height: 20.h),
                                 ],
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(16.w),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'approval_request.family_members'.tr(),
+                                      style: AppTextStyles.font14BlackMedium(
+                                        context,
+                                      ),
+                                    ),
+                                    SizedBox(height: 12.h),
+                                    CustomShowcase(
+                                      key: _familyKey,
+                                      targetKey: _familyKey,
+                                      child: FamilyMembersSelector(
+                                        onMemberSelected: (member) {
+                                          setState(() {
+                                            _selectedFamilyMember = member;
+                                          });
+                                        },
+                                        selectedMember: _selectedFamilyMember,
+                                      ),
+                                    ),
+                                    SizedBox(height: 24.h),
+                                    Text(
+                                      'approval_request.provider'.tr(),
+                                      style: AppTextStyles.font14BlackMedium(
+                                        context,
+                                      ),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    CustomShowcase(
+                                      key: _providerKey,
+                                      targetKey: _providerKey,
+                                      child: ProviderSelector(
+                                        onProviderSelected: (provider) {
+                                          setState(() {
+                                            _selectedProvider = provider;
+                                          });
+                                        },
+                                        selectedProvider: _selectedProvider,
+                                      ),
+                                    ),
+                                    SizedBox(height: 16.h),
+                                    Text(
+                                      'approval_request.note'.tr(),
+                                      style: AppTextStyles.font14BlackMedium(
+                                        context,
+                                      ),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    CustomShowcase(
+                                      key: _noteKey,
+                                      targetKey: _noteKey,
+                                      child: NoteTextField(
+                                        maxLength: 300,
+                                        controller: _noteController,
+                                        errorText: _noteError,
+                                        onChanged: (value) {
+                                          if (_noteError != null &&
+                                              value.length <= 300) {
+                                            setState(() {
+                                              _noteError = null;
+                                            });
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                    SizedBox(height: 21.h),
+                                    CustomShowcase(
+                                      key: _attachKey,
+                                      targetKey: _attachKey,
+                                      child: AttachmentsSection(
+                                        onAttachmentsChanged: (attachments) {
+                                          setState(() {
+                                            _attachments.clear();
+                                            _attachments.addAll(attachments);
+                                          });
+                                          Future.delayed(
+                                            const Duration(milliseconds: 300),
+                                            () {
+                                              if (mounted) {
+                                                FocusScope.of(
+                                                  context,
+                                                ).unfocus();
+                                                FocusManager
+                                                    .instance
+                                                    .primaryFocus
+                                                    ?.unfocus();
+                                                SystemChannels.textInput
+                                                    .invokeMethod(
+                                                      'TextInput.hide',
+                                                    );
+                                              }
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    SizedBox(height: 20.h),
+                                    CustomShowcase(
+                                      key: _submitKey,
+                                      targetKey: _submitKey,
+                                      child:
+                                          BlocConsumer<
+                                            ApprovalRequestCubit,
+                                            ApprovalRequestState
+                                          >(
+                                            listener: (context, state) {
+                                              state.when(
+                                                initial: () {},
+                                                loading: () {},
+                                                success: (data) {
+                                                  // Clear home cache to force refresh when user returns to home
+                                                  // This ensures HomeCubit will fetch fresh data instead of using cache
+                                                  CacheService.clearCache();
+                                                  
+                                                  // Notify HomeScreen to refresh its data
+                                                  // This will trigger a refresh when the user returns to home screen
+                                                  HomeRefreshService().notifyRefresh();
+                                                  
+                                                  // Show success snackbar
+                                                  if (mounted) {
+                                                    showAppSnackBar(
+                                                      context,
+                                                      'approval_request.success.title'.tr(),
+                                                    );
+                                                  }
+                                                  
+                                                  // Show success dialog
+                                                  SuccessDialog.show(context);
+                                                  _resetForm();
+                                                },
+                                                failed: (message) {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(message),
+                                                      backgroundColor:
+                                                          Colors.red,
+                                                    ),
+                                                  );
+                                                },
+                                              );
+                                            },
+                                            builder: (context, state) {
+                                              final isLoading =
+                                                  state is Loading;
+                                              return AppButton(
+                                                text: 'common.save'.tr(),
+                                                onPressed:
+                                                    _submitApprovalRequest,
+                                                isLoading: isLoading,
+                                                width: double.infinity,
+                                              );
+                                            },
+                                          ),
+                                    ),
+                                    SizedBox(height: 20.h),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
               ],
             ),
           ),

@@ -12,6 +12,7 @@ void main() {
   });
 
   test('cache and read family data', () async {
+    const lang = 'en';
     final response = FamilyResponse(
       success: true,
       timestamp: 'now',
@@ -19,14 +20,15 @@ void main() {
       data: FamilyData(familyMembers: const [], totalCount: 0),
     );
 
-    await FamilyCacheService.cacheFamilyData(response);
-    final cached = await FamilyCacheService.getCachedFamilyData();
+    await FamilyCacheService.cacheFamilyData(response, lang);
+    final cached = await FamilyCacheService.getCachedFamilyData(lang);
     expect(cached?.success, true);
   });
 
   test('clear cache removes data', () async {
-    await FamilyCacheService.clearFamilyCache();
-    final cached = await FamilyCacheService.getCachedFamilyData();
+    const lang = 'en';
+    await FamilyCacheService.clearFamilyCache(lang);
+    final cached = await FamilyCacheService.getCachedFamilyData(lang);
     expect(cached, isNull);
   });
 }

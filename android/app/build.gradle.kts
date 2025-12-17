@@ -38,9 +38,10 @@ android {
         jniLibs {
             useLegacyPackaging = true
         }
-        resources {
-            excludes += "**/*.so"
-        }
+        // Don't exclude .so files - they are needed for native libraries
+        // resources {
+        //     excludes += "**/*.so"
+        // }
     }
 
     defaultConfig {
@@ -49,6 +50,11 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // Support all architectures to prevent UnsatisfiedLinkError
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+        }
     }
 
     signingConfigs {

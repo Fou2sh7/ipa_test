@@ -25,7 +25,11 @@
     "cannot_open_pdf": "تعذر فتح ملف PDF",
     "pdf_not_available": "ملف PDF غير متاح",
     "error_loading_pdf": "حدث خطأ أثناء تحميل ملف PDF",
-    "request_timeout": "انتهت مهلة الطلب. يرجى المحاولة مرة أخرى"
+    "request_timeout": "انتهت مهلة الطلب. يرجى المحاولة مرة أخرى",
+    "instructions": "التعليمات",
+    "delete": "حذف",
+    "delete_attachment": "حذف المرفق",
+    "delete_attachment_message": "هل أنت متأكد أنك تريد حذف هذا الملف نهائياً؟"
   },
   "errors": {
     "connection_timeout": "انتهت مهلة الاتصال، يرجى المحاولة لاحقاً",
@@ -55,7 +59,9 @@
     "providers": "مقدمي الخدمة",
     "medication_coverage": "نسبة التغطية",
     "policy": "بوليسي",
+    "policy_title_prefix": "بوليصة",
     "pharmacy": "صيدلية",
+    "dental_services": "خدمات الأسنان",
     "standart_copayment": "التحمل",
     "standard_copayment": "تحمل قياسي",
     "higher_copayment": "تحمل أعلى",
@@ -131,6 +137,8 @@
       "registration_successful": "تم إنشاء الحساب بنجاح",
       "validation": {
         "card_id_required": "رقم البطاقة مطلوب",
+        "card_id_numbers": "رقم البطاقة يجب أن يحتوي على أرقام فقط",
+        "card_id_start": "رقم البطاقة يجب أن يبدأ بـ 20",
         "national_id_required": "الرقم القومي مطلوب",
         "national_id_invalid": "أدخل رقماً قومياً صحيحاً مكون من 14 رقم",
         "phone_required": "رقم الهاتف مطلوب",
@@ -241,6 +249,8 @@
     "phone_number": "رقم الهاتف",
     "date_of_birth": "تاريخ الميلاد",
     "gender": "الجنس",
+    "male": "ذكر",
+    "female": "أنثى",
     "email_address": "عنوان البريد الإلكتروني",
     "address": "العنوان",
     "validation": {
@@ -278,7 +288,8 @@
     "change_language": "تغيير اللغة",
     "english": "English",
     "arabic": "العربية",
-    "language_changed": "تم تغيير اللغة إلى "
+    "language_changed": "تم تغيير اللغة إلى ",
+    "language_changed_successfully": "تم تغيير اللغة بنجاح إلى"
   },
   "faq": {
     "title": "الأسئلة الشائعة",
@@ -388,7 +399,8 @@
     "status": {
       "approved": "موافق عليه",
       "rejected": "مرفوض",
-      "pending": "معلق"
+      "pending": "معلق",
+      "reviewing": "قيد المراجعة"
     }
   },
   "refund_request": {
@@ -453,7 +465,36 @@
     "members": "الأعضاء",
     "no_members": "لم يتم العثور على أفراد العائلة",
     "activated_member": "عضو مفعل",
-    "gold_plan": "الخطة الذهبية"
+    "inactive_member": "عضو غير مفعل",
+    "gold_plan": "الخطة الذهبية",
+    "add_member": "إضافة عضو",
+    "add_member_photo": "إضافة صورة العضو",
+    "full_name": "الاسم الكامل",
+    "national_id": "الرقم القومي",
+    "date_of_birth": "تاريخ الميلاد",
+    "relationship": "صلة القرابة",
+    "gender": "الجنس",
+    "cancel": "إلغاء",
+    "level": {
+      "head_of_family": "رب الأسرة",
+      "member": "عضو"
+    },
+    "platinum_vip": "بلاتينيوم-VIP",
+    "validation": {
+      "full_name_required": "الاسم الكامل مطلوب",
+      "national_id_required": "الرقم القومي مطلوب",
+      "national_id_length": "الرقم القومي يجب أن يكون 14 رقم",
+      "dob_required": "تاريخ الميلاد مطلوب",
+      "relationship_required": "صلة القرابة مطلوبة",
+      "gender_required": "الجنس مطلوب"
+    },
+    "relationships": {
+      "spouse": "زوج/زوجة",
+      "son": "ابن",
+      "daughter": "ابنة",
+      "parent": "والد/والدة"
+    },
+    "success_message": "تم إضافة فرد العائلة بنجاح!"
   },
   "chronic_medicines": {
     "title": "الأدوية المزمنة",
@@ -559,8 +600,20 @@
     "family_members": {
       "select": "اختر فرد العائلة الذي سيتم ربط الطلب به."
     },
+    "refund_type": {
+      "select": "اختر نوع الاسترداد الذي تطلبه."
+    },
     "provider": {
-      "select": "ابحث واختر مقدم الخدمة الذي سيتعامل مع طلبك."
+      "select": "أدخل اسم مقدم الخدمة."
+    },
+    "reason": {
+      "select": "اختر سبب طلب الاسترداد."
+    },
+    "amount": {
+      "enter": "أدخل مبلغ الاسترداد (بين 1 و 100,000)."
+    },
+    "date": {
+      "select": "اختر تاريخ الخدمة (خلال آخر 60 يوماً)."
     },
     "note": {
       "hint": "أضف ملاحظات توضيحية (اختياري بحد أقصى 300 حرف)."
@@ -589,6 +642,14 @@
       "contact_us": "تواصل مع فريق الدعم.",
       "terms_privacy": "اقرأ الشروط وسياسة الخصوصية.",
       "log_out": "سجّل الخروج من حسابك."
+    },
+    "approval_history": {
+      "swipe": "اسحب أو اضغط لتصفية طلبات الموافقة.",
+      "fab": "اضغط لإنشاء طلب موافقة جديد."
+    },
+    "refund_history": {
+      "swipe": "اسحب أو اضغط لتصفية طلبات الاسترداد.",
+      "fab": "اضغط لإنشاء طلب استرداد جديد."
     }
   },
   "placeholders": {

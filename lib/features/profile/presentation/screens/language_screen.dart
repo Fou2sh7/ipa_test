@@ -97,17 +97,44 @@ class _LanguageScreenState extends State<LanguageScreen> {
                           AppButton(
                             text: 'common.save'.tr(),
                             onPressed: () async {
+                              // Check if language actually changed
+                              final currentLang = context.locale.languageCode;
+                              if (currentLang == _selectedLanguage) {
+                                // Language didn't change, just go back
+                                context.pop();
+                                return;
+                              }
+                              
                               final languageCubit = context.read<LanguageCubit>();
                               await languageCubit.changeLanguage(_selectedLanguage);
                               
                               if (mounted) {
+                                // Get the language name for the message
+                                final selectedLangName = _languages.firstWhere(
+                                  (lang) => lang['code'] == _selectedLanguage,
+                                )['nativeName']!;
+                                
+                                // Build message in the selected language directly
+                                final message = _selectedLanguage == 'ar'
+                                    ? 'تم تغيير اللغة بنجاح إلى $selectedLangName'
+                                    : 'Language changed successfully to $selectedLangName';
+                                
+                                // Change locale
                                 await context.setLocale(Locale(_selectedLanguage));
-                                showAppSnackBar(
-                                  context,
-                                  'profile.language.language_changed'.tr(),
-                                );
-                                // Use pop instead of go to maintain navigation stack
-                                context.pop();
+                                
+                                // Wait a bit for UI to update
+                                await Future.delayed(const Duration(milliseconds: 100));
+                                
+                                if (mounted) {
+                                  // Show success message (already in the new language)
+                                  showAppSnackBar(
+                                    context,
+                                    message,
+                                  );
+                                  
+                                  // Use pop instead of go to maintain navigation stack
+                                  context.pop();
+                                }
                               }
                             },
                           ),

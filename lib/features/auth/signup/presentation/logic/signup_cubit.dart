@@ -36,9 +36,15 @@ class SignupCubit extends Cubit<SignupState> {
         success: (response) async {
           await saveUserToken(response.data!.token);
           
-          // تعيين معرف المستخدم في Crashlytics
-          final userId = response.data!.token;
-          await FirebaseCrashlyticsService.instance.setUserId(userId);
+          // تعيين معرف المستخدم في Crashlytics (memberId)
+          final memberId = response.data!.memberId.toString();
+          await FirebaseCrashlyticsService.instance.setUserId(memberId);
+          
+          // إضافة memberId كـ custom key أيضاً للمزيد من المعلومات
+          await FirebaseCrashlyticsService.instance.setCustomKey(
+            key: 'member_id',
+            value: response.data!.memberId,
+          );
           
           emit(SignupState.success(response));
           

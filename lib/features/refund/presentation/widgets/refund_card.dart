@@ -111,13 +111,16 @@ class RefundCard extends StatelessWidget {
                   'refund_history.date'.tr(),
                   item.date,
                 ),
-                SizedBox(height: 12.h),
-                _buildInfoRow(
-                  context,
-                  Icons.access_time_rounded,
-                  'refund_history.time'.tr(),
-                  DateFormatter.formatTime(item.time),
-                ),
+                // Only show time if it's not empty and not "-1"
+                if (item.time.isNotEmpty && item.time != "-1") ...[
+                  SizedBox(height: 12.h),
+                  _buildInfoRow(
+                    context,
+                    Icons.access_time_rounded,
+                    'refund_history.time'.tr(),
+                    DateFormatter.formatTime(item.time),
+                  ),
+                ],
                 SizedBox(height: 16.h),
                 _buildViewDetailsButton(context),
               ],

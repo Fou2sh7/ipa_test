@@ -11,7 +11,7 @@ class FamilyMemberRepository {
 
   Future<ApiResult<FamilyResponse>> getFamilyMembers(String lang, {bool forceRefresh = false}) async {
     if (!forceRefresh) {
-      final cachedData = await FamilyCacheService.getCachedFamilyData();
+      final cachedData = await FamilyCacheService.getCachedFamilyData(lang);
       if (cachedData != null) {
         return ApiResult.success(cachedData);
       }
@@ -21,7 +21,7 @@ class FamilyMemberRepository {
       final response = await _familyMemberApiService.getFamilyMembers(lang);
 
       if (response.success == true) {
-        await FamilyCacheService.cacheFamilyData(response);
+        await FamilyCacheService.cacheFamilyData(response, lang);
         return ApiResult.success(response);
       } else {
         return ApiResult.failure(response.message);

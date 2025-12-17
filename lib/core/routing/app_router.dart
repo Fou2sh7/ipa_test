@@ -130,6 +130,8 @@ class AppRouter {
       GoRoute(
         path: '/home',
         builder: (context, state) {
+          // Create a new HomeCubit instance to ensure fresh data
+          // The query parameter will force a rebuild
           return BlocProvider(
             create: (context) => sl<HomeCubit>(),
             child: const HomeScreen(),

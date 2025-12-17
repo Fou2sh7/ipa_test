@@ -44,19 +44,19 @@ class CacheService {
 
   // ==================== Family Members Cache ====================
   
-  /// Cache family data
-  static Future<void> cacheFamilyData(FamilyResponse data) async {
-    return FamilyCacheService.cacheFamilyData(data);
+  /// Cache family data for specific language
+  static Future<void> cacheFamilyData(FamilyResponse data, String lang) async {
+    return FamilyCacheService.cacheFamilyData(data, lang);
   }
 
-  /// Get cached family data
-  static Future<FamilyResponse?> getCachedFamilyData() async {
-    return FamilyCacheService.getCachedFamilyData();
+  /// Get cached family data for specific language
+  static Future<FamilyResponse?> getCachedFamilyData(String lang) async {
+    return FamilyCacheService.getCachedFamilyData(lang);
   }
 
-  /// Clear family cache
-  static Future<void> clearFamilyCache() async {
-    return FamilyCacheService.clearFamilyCache();
+  /// Clear family cache for specific language (or all if lang is null)
+  static Future<void> clearFamilyCache([String? lang]) async {
+    return FamilyCacheService.clearFamilyCache(lang);
   }
 
   // ==================== Approvals Cache ====================
@@ -167,6 +167,10 @@ class CacheService {
     return SupportCacheService.getCachedFaqsData();
   }
 
+  static Future<void> clearFaqsCache() async {
+    return SupportCacheService.clearFaqsCache();
+  }
+
   // ==================== Profile Cache ====================
   static Future<void> cachePersonalInfo(dynamic data) async {
     return ProfileCacheService.cachePersonalInfo(data);
@@ -191,6 +195,21 @@ class CacheService {
 
   static Future<dynamic> getCachedPrivacy() async {
     return TermsCacheService.getCachedPrivacy();
+  }
+
+  /// Clear terms cache
+  static Future<void> clearTermsCache() async {
+    return TermsCacheService.clearTermsCache();
+  }
+
+  /// Clear privacy cache
+  static Future<void> clearPrivacyCache() async {
+    return TermsCacheService.clearPrivacyCache();
+  }
+
+  /// Clear all terms and privacy cache
+  static Future<void> clearTermsPrivacyCache() async {
+    return TermsCacheService.clearAllCache();
   }
 
   // ==================== Refunds Cache ====================

@@ -48,6 +48,10 @@
 -keep class com.google.firebase.** { *; }
 -keep class com.google.android.gms.** { *; }
 
+# Prevent Google Sign-In crash when OAuth client is not configured
+-keep class com.google.android.gms.auth.api.signin.internal.SignInHubActivity { *; }
+-dontwarn com.google.android.gms.auth.api.signin.internal.SignInHubActivity
+
 # Preserve line number information for debugging stack traces
 -keepattributes SourceFile,LineNumberTable
 

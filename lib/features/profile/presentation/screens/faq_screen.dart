@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mediconsult/features/support/presentation/cubit/faq_cubit.dart';
 import 'package:mediconsult/features/support/presentation/cubit/faq_state.dart';
+import 'package:mediconsult/core/utils/language_helper.dart';
 
 class FAQScreen extends StatefulWidget {
   const FAQScreen({super.key});
@@ -16,12 +17,45 @@ class FAQScreen extends StatefulWidget {
 }
 
 class _FAQScreenState extends State<FAQScreen> {
+  String? _lastLanguageCode;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FaqCubit>().load(lang: context.locale.languageCode);
-    });
+    // Don't use context here - it's not ready yet
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Get current language - context is ready here
+    final currentLang = LanguageHelper.getLanguageCode(context);
+    
+    // First time initialization or language changed
+    if (_lastLanguageCode == null || _lastLanguageCode != currentLang) {
+      final isLanguageChange = _lastLanguageCode != null && _lastLanguageCode != currentLang;
+      _lastLanguageCode = currentLang;
+      
+      if (isLanguageChange) {
+        // Clear cache and reset state immediately to prevent showing old data
+        context.read<FaqCubit>().clearCache();
+      }
+      
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (mounted) {
+          // Wait a bit to ensure cache is cleared before loading
+          if (isLanguageChange) {
+            await Future.delayed(const Duration(milliseconds: 50));
+          }
+          if (mounted) {
+            context.read<FaqCubit>().load(
+              lang: currentLang,
+              forceRefresh: true, // Always force refresh to prevent cache issues
+            );
+          }
+        }
+      });
+    }
   }
 
   @override

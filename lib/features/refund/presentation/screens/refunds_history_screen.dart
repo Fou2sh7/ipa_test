@@ -1,17 +1,17 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mediconsult/core/theming/app_colors.dart';
 import 'package:mediconsult/core/theming/app_text_styles.dart';
-import 'package:mediconsult/shared/widgets/page_header.dart';
 import 'package:mediconsult/features/refund/presentation/cubit/refunds_cubit.dart';
 import 'package:mediconsult/features/refund/presentation/cubit/refunds_state.dart';
 import 'package:mediconsult/features/refund/presentation/widgets/refund_card.dart';
 import 'package:mediconsult/features/refund/presentation/widgets/refund_empty_state.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:showcaseview/showcaseview.dart';
+import 'package:mediconsult/shared/widgets/page_header.dart';
 import 'package:mediconsult/shared/widgets/segmented_tabs.dart';
+import 'package:mediconsult/shared/widgets/custom_showcase.dart';
 // ignore_for_file: deprecated_member_use
 
 class RefundHistoryScreen extends StatefulWidget {
@@ -25,9 +25,13 @@ class _RefundHistoryScreenState extends State<RefundHistoryScreen> {
   final ScrollController _controller = ScrollController();
   int _currentTab = 0;
   bool _isLoadingMore = false;
+  bool _canRefresh = true; // Flag to control refresh
 
   final GlobalKey _tabsKey = GlobalKey();
   final GlobalKey _fabKey = GlobalKey();
+  
+  // Showcase state
+  int _showcaseIndex = -1;
 
   @override
   void initState() {
@@ -42,9 +46,15 @@ class _RefundHistoryScreenState extends State<RefundHistoryScreen> {
   void _onScroll() {
     if (!_controller.hasClients || _isLoadingMore) return;
     final position = _controller.position;
+    
+    // Update refresh flag: only allow refresh if scroll is at the top
+    _canRefresh = position.pixels <= 0;
+    
     if (position.pixels >= position.maxScrollExtent - 200) {
       final state = context.read<RefundsCubit>().state;
-      if (state is Loaded && state.pagination.hasNextPage && !state.loadingMore) {
+      if (state is Loaded &&
+          state.pagination.hasNextPage &&
+          !state.loadingMore) {
         _isLoadingMore = true;
         final lang = context.locale.languageCode;
         context.read<RefundsCubit>().loadMore(lang).then((_) {
@@ -53,6 +63,31 @@ class _RefundHistoryScreenState extends State<RefundHistoryScreen> {
       }
     }
   }
+  
+  bool _onNotification(ScrollNotification notification) {
+    // Prevent refresh when pulling down from status bar or notification panel
+    if (notification is ScrollStartNotification) {
+      // Check if scroll is starting from top (pixels should be 0 or negative)
+      if (_controller.hasClients) {
+        final pixels = _controller.position.pixels;
+        _canRefresh = pixels <= 0;
+      }
+    } else if (notification is OverscrollNotification) {
+      // Prevent refresh on overscroll when not at the top
+      if (_controller.hasClients) {
+        final pixels = _controller.position.pixels;
+        // Only allow refresh if we're at the top and overscrolling downward
+        _canRefresh = pixels <= 0 && notification.overscroll > 0;
+      }
+    } else if (notification is ScrollUpdateNotification) {
+      // Update refresh flag during scroll
+      if (_controller.hasClients) {
+        final pixels = _controller.position.pixels;
+        _canRefresh = pixels <= 0;
+      }
+    }
+    return false; // Allow notification to continue
+  }
 
   @override
   void dispose() {
@@ -60,20 +95,57 @@ class _RefundHistoryScreenState extends State<RefundHistoryScreen> {
     super.dispose();
   }
 
+  void _startShowcase() {
+    setState(() {
+      _showcaseIndex = 0;
+    });
+  }
+
+  void _nextShowcase() {
+    if (_showcaseIndex < _showcaseKeys.length - 1) {
+      setState(() {
+        _showcaseIndex++;
+      });
+    } else {
+      _dismissShowcase();
+    }
+  }
+
+  void _dismissShowcase() {
+    setState(() {
+      _showcaseIndex = -1;
+    });
+  }
+
+  List<GlobalKey> get _showcaseKeys => [
+        _tabsKey,
+        _fabKey,
+      ];
+
+  List<String> get _showcaseDescriptions => [
+        'tutorial.refund_history.swipe'.tr(),
+        'tutorial.refund_history.fab'.tr(),
+      ];
+
   @override
   Widget build(BuildContext context) {
-    return ShowCaseWidget(
-      builder: (context) => Scaffold(
+    return CustomShowcaseOverlay(
+      targetKeys: _showcaseKeys,
+      descriptions: _showcaseDescriptions,
+      currentIndex: _showcaseIndex,
+      onNext: _nextShowcase,
+      onDismiss: _dismissShowcase,
+      child: Scaffold(
         backgroundColor: AppColors.lightGreyClr,
         body: SafeArea(
           child: Column(
             children: [
-            PageHeader(
+              PageHeader(
                 title: 'refund_history.title'.tr(),
                 backPath: '/home',
-              onHelp: () {
-                ShowCaseWidget.of(context).startShowCase([_tabsKey, _fabKey]);
-              },
+                onHelp: () {
+                  _startShowcase();
+                },
               ),
               Expanded(
                 child: Transform.translate(
@@ -96,9 +168,9 @@ class _RefundHistoryScreenState extends State<RefundHistoryScreen> {
                       child: Column(
                         children: [
                           SizedBox(height: 16.h),
-                          Showcase(
+                          CustomShowcase(
                             key: _tabsKey,
-                            description: 'Tap to filter refund requests',
+                            targetKey: _tabsKey,
                             child: SegmentedTabs(
                               labels: [
                                 'approval_history.tabs.all'.tr(),
@@ -144,57 +216,62 @@ class _RefundHistoryScreenState extends State<RefundHistoryScreen> {
                                         ),
                                       ),
                                     ),
-                                    loaded:
-                                        (
-                                          refunds,
-                                          pagination,
-                                          status,
-                                          loadingMore,
-                                        ) {
-                                          if (refunds.isEmpty) {
-                                            return const RefundEmptyState();
-                                          }
-                                          return RefreshIndicator(
-                                            onRefresh: () async {
-                                              final lang = context.locale.languageCode;
-                                              await context.read<RefundsCubit>().refreshRefunds(lang);
-                                            },
-                                            child: ListView.separated(
-                                              controller: _controller,
-                                              physics:
-                                                  const AlwaysScrollableScrollPhysics(
-                                                parent: BouncingScrollPhysics(),
-                                              ),
-                                              cacheExtent: 500,
-                                              addAutomaticKeepAlives: true,
-                                              addRepaintBoundaries: true,
-                                              itemCount:
-                                                  refunds.length +
-                                                  (pagination.hasNextPage
-                                                      ? 1
-                                                      : 0),
-                                              separatorBuilder: (_, __) =>
-                                                  SizedBox(height: 20.h),
-                                              itemBuilder: (context, index) {
-                                                if (index >= refunds.length) {
-                                                  return const Center(
-                                                    child: Padding(
-                                                      padding: EdgeInsets.all(12),
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                            strokeWidth: 2,
-                                                          ),
-                                                    ),
-                                                  );
-                                                }
-                                                return RefundCard(
-                                                  key: ValueKey(refunds[index].id),
-                                                  item: refunds[index],
+                                    loaded: (refunds, pagination, status, loadingMore) {
+                                      if (refunds.isEmpty) {
+                                        return const RefundEmptyState();
+                                      }
+                                      return NotificationListener<ScrollNotification>(
+                                        onNotification: _onNotification,
+                                        child: RefreshIndicator(
+                                          onRefresh: _canRefresh ? () async {
+                                            final lang =
+                                                context.locale.languageCode;
+                                            await context
+                                                .read<RefundsCubit>()
+                                                .refreshRefunds(lang);
+                                          } : () async {
+                                            // Do nothing if refresh is not allowed
+                                            return;
+                                          },
+                                          // Prevent refresh when pulling from status bar
+                                          displacement: 40.0,
+                                          edgeOffset: 0.0,
+                                          // Only trigger refresh if scroll is at the top
+                                          child: ListView.separated(
+                                            controller: _controller,
+                                            physics:
+                                                const AlwaysScrollableScrollPhysics(
+                                                  parent: BouncingScrollPhysics(),
+                                                ),
+                                            cacheExtent: 500,
+                                            addAutomaticKeepAlives: true,
+                                            addRepaintBoundaries: true,
+                                            itemCount:
+                                                refunds.length +
+                                                (pagination.hasNextPage ? 1 : 0),
+                                            separatorBuilder: (_, __) =>
+                                                SizedBox(height: 20.h),
+                                            itemBuilder: (context, index) {
+                                              if (index >= refunds.length) {
+                                                return const Center(
+                                                  child: Padding(
+                                                    padding: EdgeInsets.all(12),
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                        ),
+                                                  ),
                                                 );
-                                              },
-                                            ),
-                                          );
-                                        },
+                                              }
+                                              return RefundCard(
+                                                key: ValueKey(refunds[index].id),
+                                                item: refunds[index],
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                               ),
@@ -209,9 +286,9 @@ class _RefundHistoryScreenState extends State<RefundHistoryScreen> {
             ],
           ),
         ),
-      floatingActionButton: Showcase(
+        floatingActionButton: CustomShowcase(
           key: _fabKey,
-          description: 'Create a new refund request',
+          targetKey: _fabKey,
           child: FloatingActionButton(
             onPressed: () {
               context.push('/refund-request');

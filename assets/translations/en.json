@@ -25,7 +25,11 @@
     "cannot_open_pdf": "Unable to open PDF file",
     "pdf_not_available": "PDF file is not available",
     "error_loading_pdf": "Error loading PDF file",
-    "request_timeout": "Request timeout. Please try again"
+    "request_timeout": "Request timeout. Please try again",
+    "instructions": "Instructions",
+    "delete": "Delete",
+    "delete_attachment": "Delete Attachment",
+    "delete_attachment_message": "Are you sure you want to delete this file permanently?"
   },
   "errors": {
     "connection_timeout": "Connection timeout, please try again later",
@@ -60,7 +64,9 @@
     "view_details": "View Details",
     "providers": "Providers",
     "policy": "policy",
+    "policy_title_prefix": "Policy",
     "pharmacy": "Pharmacy",
+    "dental_services": "Dental Services",
     "lab": "Lab",
     "hospital": "Hospital",
     "doctor": "Doctor",
@@ -131,6 +137,8 @@
       "registration_successful": "Registration Successful",
       "validation": {
         "card_id_required": "Card ID is required",
+        "card_id_numbers": "Card ID must contain only numbers",
+        "card_id_start": "Card ID must start with 20",
         "national_id_required": "National ID is required",
         "national_id_invalid": "Enter a valid 14-digit National ID",
         "phone_required": "Phone number is required",
@@ -241,6 +249,8 @@
     "phone_number": "Phone Number",
     "date_of_birth": "Date of Birth",
     "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
     "email_address": "Email Address",
     "address": "Address",
     "validation": {
@@ -278,7 +288,8 @@
     "change_language": "Change Language",
     "english": "English",
     "arabic": "العربية",
-    "language_changed": "Language changed to "
+    "language_changed": "Language changed to ",
+    "language_changed_successfully": "Language changed successfully to"
   },
   "faq": {
     "title": "FQA",
@@ -388,7 +399,8 @@
     "status": {
       "approved": "Approved",
       "rejected": "Rejected",
-      "pending": "Pending"
+      "pending": "Pending",
+      "reviewing": "Reviewing"
     }
   },
   "refund_request": {
@@ -453,7 +465,36 @@
     "members": "Members",
     "no_members": "No family members found",
     "activated_member": "Activated Member",
-    "gold_plan": "Gold Plan"
+    "inactive_member": "Inactive Member",
+    "gold_plan": "Gold Plan",
+    "add_member": "Add Member",
+    "add_member_photo": "Add Member photo",
+    "full_name": "Full Name",
+    "national_id": "National ID",
+    "date_of_birth": "Date of Birth",
+    "relationship": "Relationship",
+    "gender": "Gender",
+    "cancel": "Cancel",
+    "level": {
+      "head_of_family": "Head of Family",
+      "member": "Member"
+    },
+    "platinum_vip": "Platinum-VIP",
+    "validation": {
+      "full_name_required": "Full name is required",
+      "national_id_required": "National ID is required",
+      "national_id_length": "National ID must be 14 digits",
+      "dob_required": "Date of birth is required",
+      "relationship_required": "Relationship is required",
+      "gender_required": "Gender is required"
+    },
+    "relationships": {
+      "spouse": "Spouse",
+      "son": "Son",
+      "daughter": "Daughter",
+      "parent": "Parent"
+    },
+    "success_message": "Family member added successfully!"
   },
   "chronic_medicines": {
     "title": "Chronic Medicines",
@@ -550,8 +591,20 @@
     "family_members": {
       "select": "Choose the family member to continue."
     },
+    "refund_type": {
+      "select": "Select the type of refund you are requesting."
+    },
     "provider": {
-      "select": "Search and pick the provider handling your request."
+      "select": "Enter the name of the service provider."
+    },
+    "reason": {
+      "select": "Select the reason for your refund request."
+    },
+    "amount": {
+      "enter": "Enter the refund amount (between 1 and 100,000)."
+    },
+    "date": {
+      "select": "Select the service date (within the last 60 days)."
     },
     "note": {
       "hint": "Add clarifying notes (optional, up to 300 characters)."
@@ -584,6 +637,10 @@
     "approval_history": {
       "swipe": "Swipe or tap to filter approvals",
       "fab": "Tap to create a new approval request"
+    },
+    "refund_history": {
+      "swipe": "Swipe or tap to filter refund requests",
+      "fab": "Tap to create a new refund request"
     }
   },
   "placeholders": {

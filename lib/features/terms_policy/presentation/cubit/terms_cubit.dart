@@ -8,9 +8,16 @@ import 'package:mediconsult/features/terms_policy/repository/terms_repository.da
 
 class TermsCubit extends Cubit<TermsState> {
   final TermsRepository _repo;
+  bool _cacheCleared = false;
+  
   TermsCubit(this._repo) : super(const TermsState.initial());
 
   Future<void> loadTerms(String lang, {bool forceRefresh = false}) async {
+    // If cache was cleared, always force refresh
+    if (_cacheCleared) {
+      forceRefresh = true;
+    }
+    
     if (!forceRefresh) {
       final cached = await CacheService.getCachedTerms();
       if (cached != null) {
@@ -24,6 +31,11 @@ class TermsCubit extends Cubit<TermsState> {
   }
 
   Future<void> loadPrivacy(String lang, {bool forceRefresh = false}) async {
+    // If cache was cleared, always force refresh
+    if (_cacheCleared) {
+      forceRefresh = true;
+    }
+    
     if (!forceRefresh) {
       final cached = await CacheService.getCachedPrivacy();
       if (cached != null) {
@@ -41,15 +53,20 @@ class TermsCubit extends Cubit<TermsState> {
     res.when(
       success: (data) async {
         await CacheService.cacheTerms(data.toJson());
+        // Reset cache cleared flag after successful load
+        _cacheCleared = false;
         emit(TermsState.loaded(data));
       },
       failure: (msg) async {
-        final cached = await CacheService.getCachedTerms();
-        if (cached != null) {
-          emit(TermsState.loaded(TermsPrivacyResponse.fromJson(cached)));
-        } else {
-          emit(TermsState.failed(msg));
+        // Don't use cache if it was cleared
+        if (!_cacheCleared) {
+          final cached = await CacheService.getCachedTerms();
+          if (cached != null) {
+            emit(TermsState.loaded(TermsPrivacyResponse.fromJson(cached)));
+            return;
+          }
         }
+        emit(TermsState.failed(msg));
       },
     );
   }
@@ -59,17 +76,30 @@ class TermsCubit extends Cubit<TermsState> {
     res.when(
       success: (data) async {
         await CacheService.cachePrivacy(data.toJson());
+        // Reset cache cleared flag after successful load
+        _cacheCleared = false;
         emit(TermsState.loaded(data));
       },
       failure: (msg) async {
-        final cached = await CacheService.getCachedPrivacy();
-        if (cached != null) {
-          emit(TermsState.loaded(TermsPrivacyResponse.fromJson(cached)));
-        } else {
-          emit(TermsState.failed(msg));
+        // Don't use cache if it was cleared
+        if (!_cacheCleared) {
+          final cached = await CacheService.getCachedPrivacy();
+          if (cached != null) {
+            emit(TermsState.loaded(TermsPrivacyResponse.fromJson(cached)));
+            return;
+          }
         }
+        emit(TermsState.failed(msg));
       },
     );
+  }
+
+  /// Clear cache for terms and privacy and reset state to prevent showing old data
+  Future<void> clearCache() async {
+    await CacheService.clearTermsPrivacyCache();
+    _cacheCleared = true; // Mark cache as cleared (will be reset after successful load)
+    // Reset state to initial to prevent showing old cached data
+    emit(const TermsState.initial());
   }
 }
 

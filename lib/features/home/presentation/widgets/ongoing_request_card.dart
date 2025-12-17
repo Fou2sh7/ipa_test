@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,11 +18,19 @@ class OngoingRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isArabic = context.locale.languageCode == 'ar';
-    final statusLabel = StatusHelper.getStatusLabel(
+    // For ongoing requests, status is "reviewing" (full text from database)
+    // Display it directly with translated label
+    final statusLabel = approval.status.toLowerCase() == 'reviewing' 
+        ? 'approval_history.status.reviewing'.tr()
+        : StatusHelper.getStatusLabel(
       approval.status,
       'approval_history',
     );
-    final statusColor = StatusHelper.getStatusColor(approval.status);
+    // Use original color from StatusHelper (grey for pending/reviewing)
+    // For "reviewing" status, treat it as "P" (Pending) to get the grey color
+    final statusColor = approval.status.toLowerCase() == 'reviewing'
+        ? StatusHelper.getStatusColor('P') // Use pending color (grey)
+        : StatusHelper.getStatusColor(approval.status);
 
     // Wrap in RepaintBoundary for better scroll performance
     return RepaintBoundary(
@@ -59,11 +68,17 @@ class OngoingRequestCard extends StatelessWidget {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8.r),
                           child: approval.providerLogo.isNotEmpty
-                              ? Image.network(
-                                  approval.providerLogo,
+                              ? CachedNetworkImage(
+                                  imageUrl: approval.providerLogo,
                                   width: 48.w,
                                   height: 60.h,
-                                  errorBuilder: (_, __, ___) => Image.asset(
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Image.asset(
+                                    AppAssets.logo,
+                                    width: 48.w,
+                                    height: 60.h,
+                                  ),
+                                  errorWidget: (context, url, error) => Image.asset(
                                     AppAssets.alfaLogo,
                                     width: 48.w,
                                     height: 60.h,
@@ -93,15 +108,8 @@ class OngoingRequestCard extends StatelessWidget {
                               ),
                               SizedBox(height: 6.h),
                               Text(
-                                "${'home.service_type'.tr()}: ${approval.notes.isNotEmpty ? approval.notes : 'home.no_notes'.tr()}",
-                                style: AppTextStyles.font12GreyRegular(context),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              SizedBox(height: 6.h),
-                              Text(
                                 "${'home.date'.tr()}: ${approval.createdDate.split('T').first}",
-                                style: AppTextStyles.font10GreyRegular(context),
+                                style: AppTextStyles.font14BlackRegular(context),
                               ),
                             ],
                           ),
@@ -133,6 +141,7 @@ class OngoingRequestCard extends StatelessWidget {
                           vertical: 2.h,
                         ),
                         decoration: BoxDecoration(
+                          // Use colored background for all statuses
                           color: statusColor.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
@@ -142,8 +151,8 @@ class OngoingRequestCard extends StatelessWidget {
                           style: AppTextStyles.font10GreyRegular(context)
                               .copyWith(
                                 fontWeight: FontWeight.w600,
-                                color: statusColor,
-                                fontSize: 9.sp,
+                                color: AppColors.blackClr, // Black text color for all statuses
+                                fontSize: 11.sp,
                               ),
                         ),
                       ),

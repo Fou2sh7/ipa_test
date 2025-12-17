@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:intl/intl.dart';
 
 /// Helper class for formatting dates
@@ -43,36 +45,59 @@ class DateFormatter {
     }
   }
   
-  /// Format time string to "10:30 AM" format
+  /// Format time string to "10:30 AM" format (always in English)
   static String formatTime(String timeString) {
     try {
       // Try to parse the time string
       DateTime? time;
       
-      // Try common time formats
+      // Try common time formats (use English locale for parsing)
       final formats = [
-        'HH:mm:ss',    // 10:30:00
-        'HH:mm',       // 10:30
-        'hh:mm a',     // 10:30 AM
-        'hh:mm:ss a',  // 10:30:00 AM
+        'HH:mm:ss',    // 14:30:00 (24-hour)
+        'HH:mm',       // 14:30 (24-hour)
+        'hh:mm a',     // 10:30 AM (12-hour)
+        'hh:mm:ss a',  // 10:30:00 AM (12-hour)
       ];
+      
+      // Use English locale for parsing to ensure consistent behavior
+      final englishLocale = const Locale('en', 'US');
       
       for (final format in formats) {
         try {
-          time = DateFormat(format).parse(timeString);
+          time = DateFormat(format, 'en_US').parse(timeString);
           break;
         } catch (e) {
           continue;
         }
       }
       
-      // If no format worked, return original string
+      // If no format worked, try manual parsing for HH:mm format
+      if (time == null) {
+        // Try to parse as HH:mm or HH:mm:ss manually
+        final parts = timeString.trim().split(':');
+        if (parts.length >= 2) {
+          try {
+            final hour = int.parse(parts[0]);
+            final minute = int.parse(parts[1].split(' ')[0]); // Handle seconds or AM/PM
+            if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
+              // Create a DateTime with today's date and the parsed time
+              final now = DateTime.now();
+              time = DateTime(now.year, now.month, now.day, hour, minute);
+            }
+          } catch (e) {
+            // If parsing fails, return original string
+            return timeString;
+          }
+        }
+      }
+      
+      // If still no time, return original string
       if (time == null) {
         return timeString;
       }
       
-      // Format to "10:30 AM"
-      return DateFormat('hh:mm a').format(time);
+      // Format to "10:30 AM" using English locale to ensure AM/PM in English
+      return DateFormat('hh:mm a', 'en_US').format(time);
     } catch (e) {
       // If any error occurs, return original string
       return timeString;

@@ -40,8 +40,11 @@ class ApprovalCard extends StatelessWidget {
                 _buildHeaderRow(context, statusColor, statusLabel),
                 SizedBox(height: 6.h),
                 _buildDateRow(context),
-                SizedBox(height: 4.h),
-                _buildTimeRow(context),
+                // Only show time if it's not empty and not "-1"
+                if (item.time.isNotEmpty && item.time != "-1") ...[
+                  SizedBox(height: 4.h),
+                  _buildTimeRow(context),
+                ],
                 SizedBox(height: 8.h),
                 _buildViewDetailsButton(context),
               ],

@@ -16,15 +16,21 @@ class ContactCubit extends Cubit<ContactState> {
         final cached = await CacheService.getCachedContactsData();
         if (cached != null) {
           final data = ContactsResponse.fromJson(cached);
-          emit(ContactState.loaded(data));
+          if (!isClosed) {
+            emit(ContactState.loaded(data));
+          }
           unawaited(_fetchAndCache(lang));
           return;
         }
       }
-      emit(const ContactState.loading());
+      if (!isClosed) {
+        emit(const ContactState.loading());
+      }
       await _fetchAndCache(lang);
     } catch (e) {
-      emit(ContactState.failed(e.toString()));
+      if (!isClosed) {
+        emit(ContactState.failed(e.toString()));
+      }
     }
   }
 
@@ -33,14 +39,18 @@ class ContactCubit extends Cubit<ContactState> {
     result.when(
       success: (data) async {
         await CacheService.cacheContactsData(data.toJson());
-        emit(ContactState.loaded(data));
+        if (!isClosed) {
+          emit(ContactState.loaded(data));
+        }
       },
       failure: (message) async {
         final cached = await CacheService.getCachedContactsData();
-        if (cached != null) {
-          emit(ContactState.loaded(ContactsResponse.fromJson(cached)));
-        } else {
-          emit(ContactState.failed(message));
+        if (!isClosed) {
+          if (cached != null) {
+            emit(ContactState.loaded(ContactsResponse.fromJson(cached)));
+          } else {
+            emit(ContactState.failed(message));
+          }
         }
       },
     );

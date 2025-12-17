@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mediconsult/features/terms_policy/presentation/cubit/terms_cubit.dart';
 import 'package:mediconsult/features/terms_policy/presentation/cubit/terms_state.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:mediconsult/core/utils/language_helper.dart';
 
 class TermsPolicyScreen extends StatefulWidget {
   const TermsPolicyScreen({super.key});
@@ -20,6 +21,48 @@ class TermsPolicyScreen extends StatefulWidget {
 
 class _TermsPolicyScreenState extends State<TermsPolicyScreen> {
   bool _isTermsSelected = true;
+  String? _lastLanguageCode;
+
+  @override
+  void initState() {
+    super.initState();
+    // Don't use context here - it's not ready yet
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Get current language - context is ready here
+    final currentLang = LanguageHelper.getLanguageCode(context);
+    
+    // First time initialization or language changed
+    if (_lastLanguageCode == null || _lastLanguageCode != currentLang) {
+      final isLanguageChange = _lastLanguageCode != null && _lastLanguageCode != currentLang;
+      _lastLanguageCode = currentLang;
+      
+      if (isLanguageChange) {
+        // Clear cache and reset state immediately to prevent showing old data
+        context.read<TermsCubit>().clearCache();
+      }
+      
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (mounted) {
+          // Wait a bit to ensure cache is cleared before loading
+          if (isLanguageChange) {
+            await Future.delayed(const Duration(milliseconds: 50));
+          }
+          if (mounted) {
+            final cubit = context.read<TermsCubit>();
+            if (_isTermsSelected) {
+              cubit.loadTerms(currentLang, forceRefresh: true); // Always force refresh
+            } else {
+              cubit.loadPrivacy(currentLang, forceRefresh: true); // Always force refresh
+            }
+          }
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,12 +98,13 @@ class _TermsPolicyScreenState extends State<TermsPolicyScreen> {
                             setState(() {
                               _isTermsSelected = isTerms;
                             });
-                            final lang = context.locale.languageCode;
+                            final lang = LanguageHelper.getLanguageCode(context);
                             final cubit = context.read<TermsCubit>();
+                            // Always use forceRefresh when switching tabs to ensure correct language
                             if (isTerms) {
-                              cubit.loadTerms(lang);
+                              cubit.loadTerms(lang, forceRefresh: true);
                             } else {
-                              cubit.loadPrivacy(lang);
+                              cubit.loadPrivacy(lang, forceRefresh: true);
                             }
                           },
                         ),
@@ -77,10 +121,12 @@ class _TermsPolicyScreenState extends State<TermsPolicyScreen> {
                                     if (_isTermsSelected) {
                                       context.read<TermsCubit>().loadTerms(
                                         lang,
+                                        forceRefresh: true,
                                       );
                                     } else {
                                       context.read<TermsCubit>().loadPrivacy(
                                         lang,
+                                        forceRefresh: true,
                                       );
                                     }
                                     return const Center(

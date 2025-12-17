@@ -49,6 +49,17 @@ class HomeCubit extends Cubit<HomeCubitState> {
     response.when(
       success: (data) async {
         await CacheService.cacheHomeData(data);
+        
+        // تحديث memberId في Crashlytics عند تحميل بيانات Home
+        if (data.data != null) {
+          final memberId = data.data!.memberId.toString();
+          await FirebaseCrashlyticsService.instance.setUserId(memberId);
+          await FirebaseCrashlyticsService.instance.setCustomKey(
+            key: 'member_id',
+            value: data.data!.memberId,
+          );
+        }
+        
         // Update notification badge count
         NotificationBadgeService.instance.setCount(data.data!.notificationsCount);
         emit(HomeCubitState.loaded(data));

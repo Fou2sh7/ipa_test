@@ -15,7 +15,7 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
     try {
       // Check cache first
       if (!forceRefresh) {
-        final cachedData = await CacheService.getCachedFamilyData();
+        final cachedData = await CacheService.getCachedFamilyData(lang);
         if (cachedData != null) {
           emit(FamilyMembersState.loaded(cachedData));
           
@@ -37,7 +37,7 @@ class FamilyMembersCubit extends Cubit<FamilyMembersState> {
     final response = await _familyMemberRepository.getFamilyMembers(lang);
     response.when(
       success: (data) async {
-        await CacheService.cacheFamilyData(data);
+        await CacheService.cacheFamilyData(data, lang);
         emit(FamilyMembersState.loaded(data));
       },
       failure: (error) {

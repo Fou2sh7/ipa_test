@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -141,10 +142,18 @@ class _FamilyMembersSelectorState extends State<FamilyMembersSelector> {
             ),
             child: ClipOval(
               child: member.memberImage != null && member.memberImage!.isNotEmpty
-                  ? Image.network(
-                      member.memberImage!,
+                  ? CachedNetworkImage(
+                      imageUrl: member.memberImage!,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
+                      placeholder: (context, url) => Container(
+                        color: AppColors.lightGreyClr,
+                        child: Icon(
+                          Icons.person,
+                          color: AppColors.greyClr,
+                          size: 24.w,
+                        ),
+                      ),
+                      errorWidget: (context, url, error) {
                         return Container(
                           color: AppColors.lightGreyClr,
                           child: Icon(

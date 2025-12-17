@@ -94,8 +94,10 @@ class LocationPermissionDialog extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   Navigator.of(context).pop();
+                  // Wait for dialog to close completely
+                  await Future.delayed(const Duration(milliseconds: 200));
                   onEnablePressed?.call();
                 },
                 style: ElevatedButton.styleFrom(

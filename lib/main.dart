@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mediconsult/core/constants/constants.dart';
@@ -64,9 +65,25 @@ Future<void> main() async {
 
   // Get saved language for EasyLocalization
   final savedLocale = await SharedPrefHelper.getString('locale');
-  final startLocale = savedLocale.isNotEmpty
-      ? Locale(savedLocale)
-      : const Locale('en');
+
+  // Supported locales
+  const supportedLocales = [Locale('en'), Locale('ar')];
+
+  // Determine start locale:
+  // 1) Saved locale if exists
+  // 2) Device locale if supported
+  // 3) Fallback to English
+  Locale startLocale;
+  if (savedLocale.isNotEmpty) {
+    startLocale = Locale(savedLocale);
+  } else {
+    final deviceLocale = PlatformDispatcher.instance.locale;
+    final match = supportedLocales.firstWhere(
+      (l) => l.languageCode == deviceLocale.languageCode,
+      orElse: () => const Locale('en'),
+    );
+    startLocale = match;
+  }
 
   runApp(
     EasyLocalization(

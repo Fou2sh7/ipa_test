@@ -1,7 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:mediconsult/core/error/app_failure.dart';
 import 'package:mediconsult/core/theming/app_colors.dart';
 
 class AppErrorHandler {
+  static String messageFromFailure(AppFailure failure) {
+    switch (failure.type) {
+      case AppFailureType.network:
+        return 'No internet connection. Please check your network.';
+      case AppFailureType.timeout:
+        return 'Request timed out. Please try again.';
+      case AppFailureType.unauthorized:
+        return 'Session expired. Please login again.';
+      case AppFailureType.forbidden:
+        return 'Access denied. You don\'t have permission.';
+      case AppFailureType.notFound:
+        return 'Resource not found.';
+      case AppFailureType.server:
+        return 'Server error. Please try again later.';
+      case AppFailureType.unexpected:
+        return failure.message ?? 'Something went wrong. Please try again.';
+    }
+  }
+
   static String getUserFriendlyMessage(String error) {
     if (error.toLowerCase().contains('socketexception') ||
         error.toLowerCase().contains('network')) {
@@ -31,13 +51,20 @@ class AppErrorHandler {
     return 'Something went wrong. Please try again.';
   }
 
+  static String _resolveMessage(Object error) {
+    if (error is AppFailure) {
+      return messageFromFailure(error);
+    }
+    return getUserFriendlyMessage(error.toString());
+  }
+
   static void showErrorSnackBar(
     BuildContext context,
-    String error, {
+    Object error, {
     VoidCallback? onRetry,
     Duration duration = const Duration(seconds: 4),
   }) {
-    final message = getUserFriendlyMessage(error);
+    final message = _resolveMessage(error);
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -58,10 +85,10 @@ class AppErrorHandler {
 
   static void showErrorDialog(
     BuildContext context,
-    String error, {
+    Object error, {
     VoidCallback? onRetry,
   }) {
-    final message = getUserFriendlyMessage(error);
+    final message = _resolveMessage(error);
     
     showDialog(
       context: context,
@@ -95,7 +122,7 @@ class AppErrorHandler {
     );
   }
 
-  static void logError(String error, {StackTrace? stackTrace}) {
+  static void logError(Object error, {StackTrace? stackTrace}) {
     debugPrint('Error: $error');
     if (stackTrace != null) {
       debugPrint('Stack trace: $stackTrace');

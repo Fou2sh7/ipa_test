@@ -42,6 +42,22 @@ class PolicyServiceHelper {
     if (name.contains('specialized')) return 'policy_screen.specialized_center'.tr();
     if (name.contains('physio')) return 'policy_screen.physiotherapy'.tr();
     if (name.contains('optical')) return 'policy_screen.optical_center'.tr();
+    if (name.contains('dental')) return 'policy_screen.dental_services'.tr();
     return serviceName;
+  }
+
+  /// Builds a properly formatted policy title based on the current locale
+  /// In Arabic: "بوليصة {service_name}"
+  /// In English: "{service_name} Policy"
+  static String getPolicyTitle(String serviceName, BuildContext context) {
+    final localizedServiceName = getLocalizedServiceName(serviceName);
+    final languageCode = context.locale.languageCode;
+    final isArabic = languageCode == 'ar';
+    
+    if (isArabic) {
+      return '${'policy_screen.policy_title_prefix'.tr()} $localizedServiceName';
+    } else {
+      return '$localizedServiceName ${'policy_screen.policy'.tr()}';
+    }
   }
 }

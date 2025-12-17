@@ -273,13 +273,13 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
               ),
               SizedBox(height: 22.h),
               Text(
-                'Delete Attachment',
+                'common.delete_attachment'.tr(),
                 style: AppTextStyles.font14BlackMedium(context),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 8.h),
               Text(
-                'Are you sure you want to delete this file permanently?',
+                'common.delete_attachment_message'.tr(),
                 style: AppTextStyles.font10GreyRegular(context),
                 textAlign: TextAlign.center,
               ),
@@ -297,7 +297,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                       ),
                       child: Text(
-                        'Cancel',
+                        'common.cancel'.tr(),
                         style: AppTextStyles.font14BlackMedium(context),
                       ),
                     ),
@@ -314,7 +314,7 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                       ),
                       child: Text(
-                        'Delete',
+                        'common.delete'.tr(),
                         style: AppTextStyles.font14WhiteMedium(context),
                       ),
                     ),

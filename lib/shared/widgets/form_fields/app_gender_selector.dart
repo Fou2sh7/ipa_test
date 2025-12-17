@@ -83,6 +83,11 @@ class AppGenderSelector extends StatelessWidget {
     FormFieldState<String> fieldState,
     context,
   ) {
+    // Get translated label for display, but keep original value for API
+    final String displayLabel = gender == 'Male' 
+        ? 'personal_info.male'.tr() 
+        : 'personal_info.female'.tr();
+    
     return GestureDetector(
       onTap: () {
         onGenderChanged(gender);
@@ -104,7 +109,7 @@ class AppGenderSelector extends StatelessWidget {
               }
             },
           ),
-          Text(gender, style: AppTextStyles.font12BlackRegular(context)),
+          Text(displayLabel, style: AppTextStyles.font12BlackRegular(context)),
         ],
       ),
     );

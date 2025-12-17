@@ -59,6 +59,29 @@ class TermsCacheService {
       return null;
     }
   }
+
+  /// Clear terms cache
+  static Future<void> clearTermsCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_termsKey);
+    await prefs.remove(_termsUpdatedKey);
+  }
+
+  /// Clear privacy cache
+  static Future<void> clearPrivacyCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_privacyKey);
+    await prefs.remove(_privacyUpdatedKey);
+  }
+
+  /// Clear all terms and privacy cache
+  static Future<void> clearAllCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_termsKey);
+    await prefs.remove(_termsUpdatedKey);
+    await prefs.remove(_privacyKey);
+    await prefs.remove(_privacyUpdatedKey);
+  }
 }
 
 
