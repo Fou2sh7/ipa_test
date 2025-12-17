@@ -21,26 +21,32 @@ jobs:
       # 3️⃣ Get dependencies
       - run: flutter pub get
 
-      # 4️⃣ Update CocoaPods
+      # 4️⃣ Install FlutterFire CLI
+      - name: Install FlutterFire CLI
+        run: |
+          dart pub global activate flutterfire_cli
+          echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
+
+      # 5️⃣ Update CocoaPods
       - run: pod repo update
         working-directory: ios
 
-      # 5️⃣ Build iOS IPA
+      # 6️⃣ Build iOS IPA
       - run: flutter build ios --release --no-codesign
 
-      # 6️⃣ Prepare Payload folder
+      # 7️⃣ Prepare Payload folder
       - run: mkdir Payload
         working-directory: build/ios/iphoneos
 
       - run: mv Runner.app Payload
         working-directory: build/ios/iphoneos
 
-      # 7️⃣ Zip IPA
+      # 8️⃣ Zip IPA
       - name: Zip IPA
         run: zip -qq -r -9 FlutterIpaExport.ipa Payload
         working-directory: build/ios/iphoneos
 
-      # 8️⃣ Create Auto Tag
+      # 9️⃣ Create Auto Tag
       - name: Create Auto Tag
         id: create_tag
         run: |
@@ -48,7 +54,8 @@ jobs:
           echo "TAG=$TAG" >> $GITHUB_ENV
           git tag $TAG
           git push origin $TAG
-      # 9️⃣ Upload to GitHub Release
+
+      # 🔟 Upload to GitHub Release
       - name: Upload Release
         uses: svenstaro/upload-release-action@v2
         with:
