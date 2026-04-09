@@ -6,16 +6,19 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+      ios_signing:
+        distribution_type: app_store   # or: ad_hoc / development
+        bundle_identifier: com.your.bundleid  # ← change this
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
       - name: Install pods
         script: |
           find . -name "Podfile" -execdir pod install \;
+      - name: Set up code signing
+        script: xcode-project use-profiles
       - name: Flutter build IPA
-        script: |
-          flutter build ipa --release \
-            --export-options-plist=/Users/builder/export_options.plist
+        script: flutter build ipa --release
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
