@@ -3,43 +3,31 @@ workflows:
     name: iOS Workflow
     max_build_duration: 120
     integrations:
-      app_store_connect: my_app_store_key  # replace with your key name in Codemagic
+      app_store_connect: my_app_store_key  # name you gave in Step 2
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.mediconsult.app  # your bundle ID from the logs
+        bundle_identifier: com.your.bundleid  # ← your real bundle ID
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
-
-      - name: Install FlutterFire CLI
-        script: |
-          dart pub global activate flutterfire_cli
-          export PATH="$PATH":"$HOME/.pub-cache/bin"
-
       - name: Install pods
         script: |
           find . -name "Podfile" -execdir pod install \;
-
       - name: Set up code signing
         script: xcode-project use-profiles
-
       - name: Flutter build IPA
-        script: |
-          export PATH="$PATH":"$HOME/.pub-cache/bin"
-          flutter build ipa --release
-
+        script: flutter build ipa --release
     artifacts:
       - build/ios/ipa/*.ipa
-
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
-        submit_to_app_store: false
+        submit_to_testflight: true   # set false if you don't want TestFlight
+        submit_to_app_store: false   # set true for direct App Store submission
       email:
         recipients:
-          - your@email.com  # replace with your real email
+          - your@email.com
