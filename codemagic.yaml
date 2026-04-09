@@ -14,8 +14,8 @@ workflows:
           find . -name "Podfile" -execdir pod install \;
       - name: Flutter build IPA
         script: |
-          flutter build ipa --release \
-            --export-options-plist=/Users/builder/export_options.plist
+          export PATH="$PATH":"$HOME/.pub-cache/bin"
+          flutter build ipa --release
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
